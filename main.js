@@ -12,7 +12,7 @@ const NEWSAPI_API_KEY = process.env.NEWSAPI_API_KEY || "";
 
 // create a menu
 const menu = new MenuTemplate(() => 'News from Around the World')
-const COUNTRYCODES = ['ae','ar','at','au','be','bg','br','ca','ch','cn','co','cu','cz','de','eg','fr','gb','gr','hk','hu','id','ie','il','in','it','jp','kr','lt','lv','ma','mx','my','ng','nl','no','nz','ph','pl','pt','ro','rs','ru','sa','se','sg','si','sk','th','tr','tw','ua','us','ve','za']
+const COUNTRYCODES = 'ae ar at au be bg br ca ch cn co cu cz de eg fr gb gr hk hu id ie il in it jp kr lt lv ma mx my ng nl no nz ph pl pt ro rs ru sa se sg si sk th tr tw ua us ve za'.split(' ')
 
 const astring = 'haha'
 astring.trim().toLowerCase().toUpperCase()
@@ -21,12 +21,18 @@ for (let i = 0; i < COUNTRYCODES.length; i++) {
     const country = COUNTRYCODES[i];
     if (i % 6) {
         menu.interact(country.toUpperCase(), country, {
-            do: ctx => ctx.answerCbQuery().then(() => true),
+            do: async ctx => {
+                await ctx.answerCbQuery(`You have clicked ${country.toUpperCase()}`)
+                return true
+            },
             joinLastRow: true
         })
     } else {
         menu.interact(country.toUpperCase(), country, {
-            do: ctx => ctx.answerCbQuery().then(() => true)
+            do: async ctx => {
+                await ctx.answerCbQuery(`You have clicked ${country.toUpperCase()}`)
+                return true
+            }
         })
     }
 }
@@ -56,8 +62,8 @@ fetchNews = async (country, ctx) => {
             const img = article['urlToImage'] || {source: (__dirname + '/images/no_image.png')}
             const title = article['title']
             const description = article['description']
-            // const url = article['url'] || 'no url'
-            ctx.replyWithPhoto(img, {parse_mode: 'HTML', caption: `<b>${title}</b> ${description} `})
+            const url = article['url']
+            ctx.replyWithPhoto(img, {parse_mode: 'HTML', caption: `<b>${title}</b> \n ${description} \n <a href="${url}">Link to article</a>`})
         })
     } catch (error) {
         console.error('Error: ', error)
