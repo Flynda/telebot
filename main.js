@@ -67,6 +67,7 @@ fetchNews = async (country, ctx) => {
         })
     } catch (error) {
         console.error('Error: ', error)
+        ctx.reply('Whoops, something happened... :(')
     }
     return
 
