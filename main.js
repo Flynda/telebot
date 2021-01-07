@@ -33,9 +33,8 @@ for (let i = 0; i < COUNTRYCODES.length; i++) {
 
 const menuMiddleware = new MenuMiddleware('/', menu)
 
-fetchNews = (country, ctx) => {
+fetchNews = async (country, ctx) => {
     console.info('country: ', country)
-    ctx.reply(`Haha, you are pranked! There's no news here for you!`)
     const url = withQuery(
         NEWSAPI_ENDPOINT,
         {
@@ -43,6 +42,28 @@ fetchNews = (country, ctx) => {
             pageSize: 5
         }
     )
+    const headers = new fetch.Headers ({
+        'X-Api-Key': NEWSAPI_API_KEY
+    })
+
+    try {
+        console.info('headers: ', headers)
+        const result = await fetch(url, {headers: headers})
+        const newsArticles = await result.json()
+        console.info(`result is: \n`, newsArticles)
+
+        newsArticles.articles.map(article => {
+            const img = article['urlToImage'] || {source: (__dirname + '/images/no_image.png')}
+            const title = article['title']
+            const description = article['description']
+            // const url = article['url'] || 'no url'
+            ctx.replyWithPhoto(img, {parse_mode: 'HTML', caption: `<b>${title}</b> ${description} `})
+        })
+    } catch (error) {
+        console.error('Error: ', error)
+    }
+    return
+
 }
 
 // create a bot
@@ -63,7 +84,7 @@ bot.hears('hi', ctx => ctx.reply('Hello!'))
 bot.hears('hello', ctx => ctx.reply('Hello!'))
 
 // bot.hears('orange', ctx => ctx.reply('The color or the fruit?'))
-bot.hears('orange', ctx => ctx.replyWithPhoto({source: (__dirname + '/images/orange.jpg')}))
+bot.hears('orange', ctx => ctx.replyWithPhoto({source: (__dirname + '/images/orange.jpg')}, {caption: 'You mean the fruit?'}))
 
 bot.command('giphy', async (ctx) => {
     ctx.reply(`Fetching 5 GIPHYs! Please wait...`)
@@ -91,7 +112,7 @@ bot.command('giphy', async (ctx) => {
         const giphy = await result.json()
         // console.info(`result is: \n`, giphy)
 
-        giphy.data.forEach(dataObj => {
+        giphy.data.map(dataObj => {
             ctx.replyWithPhoto(dataObj.images.fixed_height.url, {caption: dataObj.title})
         })
     } catch (error) {
@@ -102,13 +123,15 @@ bot.command('giphy', async (ctx) => {
 
 bot.command('news', ctx => {
     const name = ctx.message.from.first_name
+    // ctx.reply(`Haha, you are pranked! There's no news here for you!`)
     const length = ctx.message.entities[0].length
     const country = ctx.message.text.substring(length).trim()
 
     // display menu if no country is selected
-    if (country.length <=0 || country.length >2)
+    if (country.length <=0 || country.length >2) {
+        ctx.reply(`Whoa there! I can't get your request. Choose one of these instead:`)
         return menuMiddleware.replyToContext(ctx)
-
+    }
     return fetchNews(country, ctx)
 })
 
